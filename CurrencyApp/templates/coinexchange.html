@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coin Exchange + Live Graph</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial;
+        }
+
+        body{
+            min-height:100vh;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            background:linear-gradient(135deg,#0f172a,#1e293b,#111827);
+            color:white;
+            padding-top:40px;
+        }
+
+        .box{
+            width:420px;
+            padding:25px;
+            border-radius:20px;
+            background:rgba(255,255,255,0.08);
+            backdrop-filter:blur(12px);
+            text-align:center;
+            margin-bottom:20px;
+        }
+
+        input, select{
+            width:100%;
+            padding:12px;
+            margin-top:10px;
+            border:none;
+            border-radius:10px;
+        }
+
+        .row{
+            display:flex;
+            gap:10px;
+            margin-top:10px;
+        }
+
+        .row select{
+            flex:1;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            margin-top:15px;
+            border:none;
+            border-radius:10px;
+            background:#22c55e;
+            color:white;
+            font-size:16px;
+            cursor:pointer;
+        }
+
+        #result{
+            margin-top:15px;
+            font-size:18px;
+            color:#38bdf8;
+            font-weight:bold;
+        }
+
+        #rate{
+            margin-top:5px;
+            font-size:13px;
+            color:#cbd5e1;
+        }
+
+        /* TIME BUTTONS */
+        .time-buttons{
+            display:flex;
+            gap:8px;
+            margin:15px 0;
+            justify-content:center;
+        }
+
+        .time-buttons button{
+            width:auto;
+            padding:6px 12px;
+            background:#334155;
+            font-size:13px;
+        }
+
+        .time-buttons button:hover{
+            background:#475569;
+        }
+
+        /* GRAPH */
+        .graph-container{
+            width:550px; /* 🔼 ~10% bigger than before */
+        }
+
+        canvas{
+            width:550px !important;
+            height:240px !important;
+            background:rgba(0,0,0,0.2);
+            border-radius:15px;
+            padding:10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h2>Coin → Currency</h2>
+
+    <input type="number" id="amount" placeholder="Enter coin amount">
+
+    <div class="row">
+
+        <select id="coin" onchange="loadChart('1w')">
+            <option value="bitcoin">Bitcoin (BTC)</option>
+            <option value="ethereum">Ethereum (ETH)</option>
+            <option value="solana">Solana (SOL)</option>
+        </select>
+
+        <select id="currency">
+            <option value="inr">INR</option>
+            <option value="usd">USD</option>
+            <option value="eur">EUR</option>
+            <option value="gbp">GBP</option>
+        </select>
+
+    </div>
+
+    <button onclick="convert()">Convert</button>
+
+    <div id="result"></div>
+    <div id="rate"></div>
+
+</div>
+
+<!-- TIME RANGE BUTTONS -->
+<div class="time-buttons">
+    <button onclick="loadChart('1')">1D</button>
+    <button onclick="loadChart('7')">1W</button>
+    <button onclick="loadChart('30')">1M</button>
+    <button onclick="loadChart('365')">1Y</button>
+</div>
+
+<!-- GRAPH -->
+<div class="graph-container">
+    <canvas id="chart"></canvas>
+</div>
+
+<script>
+
+let chart;
+
+// LOAD GRAPH WITH RANGE
+async function loadChart(days="7"){
+
+    let coin = document.getElementById("coin").value;
+
+    const url = `https://api.coingecko.com/api/v3/coins/${coin}/market_chart?vs_currency=usd&days=${days}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const prices = data.prices;
+
+    let labels = prices.map(p => {
+        let d = new Date(p[0]);
+        return d.getDate() + "/" + (d.getMonth()+1);
+    });
+
+    let values = prices.map(p => p[1]);
+
+    if(chart){
+        chart.destroy();
+    }
+
+    const ctx = document.getElementById("chart").getContext("2d");
+
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: coin.toUpperCase() + " (USD)",
+                data: values,
+                borderColor: "#38bdf8",
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// CONVERT
+function convert(){
+
+    let amount = document.getElementById("amount").value;
+    let coin = document.getElementById("coin").value;
+    let currency = document.getElementById("currency").value;
+
+    fetch("/coinAction/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: `amount=${amount}&from=${coin}&to=${currency}`
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById("result").innerHTML =
+            `${amount} ${coin.toUpperCase()} = ${data.result} ${currency.toUpperCase()}`;
+
+        document.getElementById("rate").innerHTML =
+            `Live market conversion`;
+
+    });
+
+}
+
+// CSRF
+function getCookie(name){
+    let cookieValue = null;
+
+    if(document.cookie){
+        let cookies = document.cookie.split(';');
+
+        for(let c of cookies){
+            c = c.trim();
+            if(c.startsWith(name + '=')){
+                cookieValue = decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// INIT
+loadChart("7");
+
+</script>
+
+</body>
+</html>

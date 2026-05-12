@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Live Currency Dashboard</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial;
+        }
+
+        body{
+            min-height:100vh;
+            background:linear-gradient(135deg,#0f172a,#1e293b,#111827);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:30px;
+        }
+
+        #ticker{
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            background:#0f172a;
+            color:white;
+            padding:10px;
+            text-align:center;
+            font-size:14px;
+        }
+
+        .container{
+            width:650px;
+            background:white;
+            padding:40px;
+            border-radius:25px;
+            box-shadow:0 15px 50px rgba(0,0,0,0.4);
+        }
+
+        h1{
+            text-align:center;
+            color:#2563eb;
+            margin-bottom:20px;
+        }
+
+        label{
+            display:block;
+            margin-top:12px;
+            font-weight:bold;
+        }
+
+        input,select{
+            width:100%;
+            padding:12px;
+            margin-top:6px;
+            border-radius:10px;
+            border:1px solid #ccc;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            margin-top:15px;
+            background:#2563eb;
+            color:white;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+        }
+
+        #result{
+            margin-top:20px;
+            font-size:22px;
+            text-align:center;
+            font-weight:bold;
+            color:#16a34a;
+        }
+
+        .tf-buttons{
+            display:flex;
+            gap:10px;
+            margin-top:20px;
+        }
+
+        .tf-buttons button{
+            flex:1;
+            background:#334155;
+        }
+
+        canvas{
+            margin-top:20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div id="ticker">LIVE MARKET LOADING...</div>
+
+<div class="container">
+
+    <h1>Live Currency Dashboard</h1>
+
+    <label>Amount</label>
+    <input type="number" id="amount" value="1">
+
+    <label>From</label>
+    <select id="from"></select>
+
+    <label>To</label>
+    <select id="to"></select>
+
+    <label>Decimals</label>
+    <select id="decimal">
+        <option value="2">2</option>
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+    </select>
+
+    <button onclick="convertCurrency()">Convert</button>
+    <button onclick="toggleRealtime()" style="background:#10b981;">Toggle Real-Time</button>
+
+    <div id="result"></div>
+
+    <div class="tf-buttons">
+        <button onclick="loadChart('1d')">1D</button>
+        <button onclick="loadChart('1w')">1W</button>
+        <button onclick="loadChart('1m')">1M</button>
+        <button onclick="loadChart('1y')">1Y</button>
+        <button onclick="loadChart('5y')">5Y</button>
+    </div>
+
+    <canvas id="rateChart"></canvas>
+    <canvas id="liveChart"></canvas>
+
+</div>
+
+<script>
+
+/* ---------------- 170+ CURRENCIES ---------------- */
+const currencies = [
+"USD","EUR","GBP","INR","JPY","AUD","CAD","CHF","CNY","HKD","NZD","SEK","KRW","SGD","NOK","MXN","RUB","ZAR","TRY","BRL",
+"DKK","PLN","TWD","THB","MYR","IDR","CZK","HUF","ILS","PHP","AED","SAR","QAR","KWD","BHD","OMR","EGP","PKR","BDT","LKR",
+"NPR","VND","NGN","KES","GHS","UGX","TZS","ETB","MAD","DZD","ARS","CLP","COP","PEN","UYU","BOB","CRC","DOP","GTQ","HNL",
+"NIO","PAB","ISK","BGN","HRK","RON","UAH","GEL","AMD","AZN","KZT","UZS","TMT","MNT","LAK","MMK","KHR","BND","FJD","PGK",
+"SBD","WST","TOP","VUV","XOF","XAF","XPF","SDG","SSP","LYD","MUR","SCR","MGA","MWK","ZMW","BWP","NAD","LSL","SZL"
+];
+
+/* ---------------- POPULATE DROPDOWNS ---------------- */
+function loadCurrencies(){
+    let from = document.getElementById("from");
+    let to = document.getElementById("to");
+
+    currencies.forEach(c => {
+
+        let opt1 = document.createElement("option");
+        opt1.value = c;
+        opt1.innerText = c;
+
+        let opt2 = document.createElement("option");
+        opt2.value = c;
+        opt2.innerText = c;
+
+        from.appendChild(opt1);
+        to.appendChild(opt2);
+    });
+
+    from.value = "USD";
+    to.value = "INR";
+}
+
+loadCurrencies();
+
+/* ---------------- CHARTS ---------------- */
+let chart;
+let liveChart;
+let liveData = [];
+let realtime = true;
+
+function initCharts(){
+
+    chart = new Chart(document.getElementById("rateChart"), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "History",
+                data: [],
+                borderColor: "#2563eb",
+                fill: true
+            }]
+        }
+    });
+
+    liveChart = new Chart(document.getElementById("liveChart"), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Live",
+                data: [],
+                borderColor: "#10b981",
+                fill: true
+            }]
+        },
+        options:{animation:false}
+    });
+}
+
+/* ---------------- CONVERT ---------------- */
+async function convertCurrency(){
+
+    let amount = document.getElementById("amount").value;
+    let from = document.getElementById("from").value;
+    let to = document.getElementById("to").value;
+    let decimal = document.getElementById("decimal").value;
+
+    let form = new FormData();
+    form.append("amount", amount);
+    form.append("from", from);
+    form.append("to", to);
+    form.append("decimal", decimal);
+
+    let res = await fetch("/livecurrencyAction/", {
+        method:"POST",
+        headers:{'X-CSRFToken':getCookie('csrftoken')},
+        body:form
+    });
+
+    let data = await res.text();
+
+    document.getElementById("result").innerHTML =
+        `${amount} ${from} = ${data} ${to}`;
+}
+
+/* ---------------- REAL TIME ---------------- */
+async function tick(){
+
+    let from = document.getElementById("from").value;
+    let to = document.getElementById("to").value;
+
+    let form = new FormData();
+    form.append("amount", 1);
+    form.append("from", from);
+    form.append("to", to);
+    form.append("decimal", 6);
+
+    let res = await fetch("/livecurrencyAction/", {
+        method:"POST",
+        headers:{'X-CSRFToken':getCookie('csrftoken')},
+        body:form
+    });
+
+    let rate = parseFloat(await res.text());
+
+    document.getElementById("ticker").innerHTML =
+        `LIVE: 1 ${from} = ${rate} ${to}`;
+
+    liveData.push(rate);
+    if(liveData.length > 40) liveData.shift();
+
+    liveChart.data.labels = liveData.map(()=>"");
+    liveChart.data.datasets[0].data = liveData;
+    liveChart.update();
+}
+
+setInterval(()=>{
+    if(realtime){
+        convertCurrency();
+        tick();
+    }
+},3000);
+
+function toggleRealtime(){
+    realtime = !realtime;
+}
+
+/* ---------------- HISTORY ---------------- */
+async function loadChart(period){
+
+    let from = document.getElementById("from").value;
+    let to = document.getElementById("to").value;
+
+    let res = await fetch(`/currency_history/?from=${from}&to=${to}&period=${period}`);
+    let data = await res.json();
+
+    chart.data.labels = data.labels;
+    chart.data.datasets[0].data = data.values;
+    chart.update();
+}
+
+/* ---------------- CSRF ---------------- */
+function getCookie(name){
+    let cookies = document.cookie.split(";");
+    for(let c of cookies){
+        c = c.trim();
+        if(c.startsWith(name+"=")){
+            return decodeURIComponent(c.split("=")[1]);
+        }
+    }
+}
+
+window.onload = initCharts;
+
+</script>
+
+</body>
+</html>

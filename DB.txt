@@ -1,0 +1,20 @@
+create database Currency;
+use Currency;
+
+create table signup(username varchar(50)primary key, password varchar(50),
+contact_no varchar(12),
+email_id varchar(50),
+address varchar(50));
+
+create table defaultCurrency(username varchar(50),
+source_currency varchar(10),
+dest_currency varchar(10));
+
+create table conversions(username varchar(50),
+source_currency varchar(10),
+dest_currency varchar(10),
+amount varchar(30),
+rate varchar(30),
+receive_amount varchar(40),
+check_date varchar(40));
+

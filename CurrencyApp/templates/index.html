@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CurrencyMaster</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial;
+        }
+
+        body{
+            background: linear-gradient(135deg,#0f172a,#1e293b,#111827);
+            color:white;
+        }
+
+        nav{
+            width:100%;
+            padding:20px 80px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            background:rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo{
+            font-size:32px;
+            font-weight:bold;
+            color:#38bdf8;
+        }
+
+        nav ul{
+            display:flex;
+            list-style:none;
+            gap:30px;
+        }
+
+        nav ul li a{
+            text-decoration:none;
+            color:white;
+            font-size:18px;
+            transition:0.3s;
+        }
+
+        nav ul li a:hover{
+            color:#38bdf8;
+        }
+
+        .hero{
+            min-height:90vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+            padding:40px;
+        }
+
+        .hero-content{
+            max-width:900px;
+        }
+
+        .hero h1{
+            font-size:70px;
+            margin-bottom:20px;
+            background:linear-gradient(to right,#38bdf8,#818cf8);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+        }
+
+        .hero p{
+            font-size:22px;
+            color:#cbd5e1;
+            line-height:1.7;
+            margin-bottom:40px;
+        }
+
+        .btn{
+            display:inline-block;
+            padding:16px 40px;
+            background:#38bdf8;
+            color:white;
+            text-decoration:none;
+            border-radius:50px;
+            font-size:18px;
+            transition:0.3s;
+        }
+
+        .btn:hover{
+            background:#0284c7;
+            transform:translateY(-3px);
+        }
+
+        .btn-green{
+            background:#22c55e;
+        }
+
+        .btn-green:hover{
+            background:#16a34a;
+        }
+
+        .btn-group{
+            display:flex;
+            justify-content:center;
+            gap:20px;
+            flex-wrap:wrap;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav>
+
+    <div class="logo">CurrencyMaster</div>
+
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/login/">Login</a></li>
+        <li><a href="/signup/">Signup</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/defaultcurrency/">Default Currency</a></li>
+        <li><a href="/livecurrency/">Live Currency</a></li>
+        <li><a href="/coinexchange/">Coin Exchange</a></li>
+    </ul>
+
+</nav>
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <h1>Modern Currency Converter</h1>
+
+        <p>
+            Convert currencies instantly with real-time exchange rates.
+            Now also supports crypto coin exchange with live API pricing.
+        </p>
+
+        <!-- BUTTONS -->
+        <div class="btn-group">
+
+            <a href="/livecurrency/" class="btn">
+                Start Currency Convert
+            </a>
+
+            <a href="/coinexchange/" class="btn btn-green">
+                Coin Exchange
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+</body>
+</html>
