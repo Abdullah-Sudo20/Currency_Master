@@ -4,17 +4,20 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ========================
-# SECURITY
+# SECURITY (FIXED)
 # ========================
-SECRET_KEY = "django-insecure-change-this-key"
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-fallback-key-change-me"
+)
 
-DEBUG = False
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*"]  # later you can restrict to your vercel domain
 
 
 # ========================
-# APPLICATIONS
+# APPS
 # ========================
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -30,9 +33,6 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-
-    # your apps
-    # "your_app_name",
 ]
 
 SITE_ID = 1
@@ -43,8 +43,6 @@ SITE_ID = 1
 # ========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
-    # for static files (IMPORTANT for Vercel)
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -52,7 +50,6 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
 
-    # allauth middleware (keep if needed)
     "allauth.account.middleware.AccountMiddleware",
 
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -60,7 +57,7 @@ MIDDLEWARE = [
 ]
 
 
-ROOT_URLCONF = "Currency.urls"
+ROOT_URLCONF = "Currency.urls"   # ⚠️ MUST match your project folder
 
 
 # ========================
@@ -69,7 +66,7 @@ ROOT_URLCONF = "Currency.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "CurrencyApp", "templates")],
+        "DIRS": [BASE_DIR / "CurrencyApp" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -83,11 +80,11 @@ TEMPLATES = [
 ]
 
 
-WSGI_APPLICATION = "Currency.wsgi.application"
+WSGI_APPLICATION = "Currency.wsgi.application"  # ⚠️ MUST match folder name
 
 
 # ========================
-# DATABASE (CHANGED FOR VERCEL)
+# DATABASE (IMPORTANT NOTE)
 # ========================
 DATABASES = {
     "default": {
@@ -98,7 +95,7 @@ DATABASES = {
 
 
 # ========================
-# PASSWORD VALIDATION
+# PASSWORDS
 # ========================
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -109,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # ========================
-# INTERNATIONALIZATION
+# INTERNATIONAL
 # ========================
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
@@ -118,24 +115,23 @@ USE_TZ = True
 
 
 # ========================
-# STATIC FILES
+# STATIC FILES (VERCEL FIX)
 # ========================
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise static handling
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # ========================
-# DEFAULT AUTO FIELD
+# DEFAULT FIELD
 # ========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ========================
-# AUTHENTICATION (ALLAUTH)
+# AUTH
 # ========================
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
